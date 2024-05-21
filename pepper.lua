@@ -1,4 +1,4 @@
---[[pod_format="raw",created="2024-05-19 15:24:54",modified="2024-05-21 18:56:08",revision=826]]
+--[[pod_format="raw",created="2024-05-19 15:24:54",modified="2024-05-21 20:18:55",revision=893]]
 -- contains the code for running the command (look at other commands for examples)
 
 -- probably put the files into /ram/pepper/
@@ -60,21 +60,16 @@ end
 
 function eval_statement(start_i, env)
 	local a, a2 = find_statement_end(start_i)
-	
 	local statement = sub(file, start_i, a)
 
-	print("found:" .. statement)
-	
 	-- insert into function
 	local f, err = load("_val = " .. statement, nil, "t", env)
 	
 	-- invalid line
-	if(not f) return	 false
-		
+	if(not f) error("invalid statement: " .. statement, 0)
+
 	f()
-	print("gives:" .. tostr(env._val))
-	
-	return true, env._val, a2
+	return env._val, a2
 end
 
 local i = 1
@@ -110,19 +105,19 @@ while true do
 		local _,b,name = file:find("(%w)",i)
 		i = b+2
 
-		local valid, val, e = eval_statement(i, defs)
-		if(valid) defs[name] = val
+		local val, e = eval_statement(i, defs)
+		defs[name] = val
 		
 		add(section_removal, {a, e})
 	
 	elseif c == "if" then
-		local valid, val, e = eval_statement(i, defs)
+		local val, e = eval_statement(i, defs)
 		val = val and true or false -- turn to boolean
 		
 		add(if_blocks, {a, e, val, val})
 
 	elseif c == "elseif" then
-		local valid, val, e = eval_statement(i, defs)
+		local val, e = eval_statement(i, defs)
 		local block = block_removal(e)
 				
 		add(if_blocks, {a, e, block[3] or val, not block[3] and val})
@@ -140,7 +135,7 @@ while true do
 		add(section_removal, {a, e})
 	
 	elseif c == "insert" then
-		local valid, val, e = eval_statement(i, defs)
+		local val, e = eval_statement(i, defs)
 		
 		add(section_removal, {a, e, val})
 	end
@@ -154,9 +149,6 @@ local i = 1
 while i < #section_removal do
 	local a, b = section_removal[i], section_removal[i+1]
 	if a[2] >= b[1] then
-		print("merge")
-		print(tostr(a[1]) .. " " .. tostr(a[2]) .. " " .. tostr(a[3]))
-		print(tostr(b[1]) .. " " .. tostr(b[2]) .. " " .. tostr(b[3]))
 		a[2] = max(b[2], a[2])
 		deli(section_removal, i+1)
 	else
