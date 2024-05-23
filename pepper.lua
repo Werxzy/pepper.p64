@@ -1,4 +1,4 @@
---[[pod_format="raw",created="2024-05-19 15:24:54",modified="2024-05-23 12:54:30",revision=929]]
+--[[pod_format="raw",created="2024-05-19 15:24:54",modified="2024-05-23 15:55:37",revision=1066]]
 -- contains the code for running the command (look at other commands for examples)
 
 -- probably put the files into /ram/pepper/
@@ -69,12 +69,17 @@ local function eval_statement(file, start_i, env)
 	return env._val, a2
 end
 
-local function pepper_file(file)
+
+local function pepper_file(file, base_defs)
 	local i = 1
 	local defs = {} -- add from command line if needed
 	local if_blocks = {} -- {{starting point, end of statement, truthy statement found, current statement truthy}, ...}
 	local section_removal = {} -- {{start, end, new contents}, ...}
 	
+	for k,v in pairs(base_defs) do
+		defs[k] = v
+	end
+
 	function block_removal(e)
 		local block = deli(if_blocks)
 	
@@ -158,10 +163,38 @@ local function pepper_file(file)
 		file = sub(file, 0, r[1]-1) ..(r[3] and tostr(r[3]) or "") .. sub(file, r[2]+1)
 	end
 	
-	return file
+	return file, defs
 end
 
-local file = pepper_file(fetch("/ram/cart/main.lua"))
+-- make a copy of the current cart to work with
+cp("/ram/cart/", "/ram/pepper/")
+
+function pepper_dir(dir, ignore)
+	local files = ls(dir)
+	for f in all(files) do
+		local _f, f = f, dir .. f
+		
+		-- skip files or folders from a table
+		if not ignore or (count(ignore, f) == 0 and count(ignore, _f) == 0) then
+			local ty = fstat(f)
+						
+			if ty == "file" then
+				if f:ext() == "lua" then
+					store(f, pepper_file(fetch(f)))
+					print(f)
+				end
+				
+			elseif ty == "folder" then
+				pepper_dir(f)
+			end
+		end
+	end
+end
+
+pepper_dir("/ram/pepper/", {"TODO.lua", "README.lua"})
+
+-- local file = pepper_file(fetch("/ram/pepper/main.lua"))
+-- store("/ram/pepper/main.lua", file)
 
 -- new version of file
 print(file)
