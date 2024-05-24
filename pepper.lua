@@ -1,4 +1,4 @@
---[[pod_format="raw",created="2024-05-19 15:24:54",modified="2024-05-23 15:55:37",revision=1066]]
+--[[pod_format="raw",created="2024-05-19 15:24:54",modified="2024-05-24 00:45:22",revision=1503]]
 -- contains the code for running the command (look at other commands for examples)
 
 -- probably put the files into /ram/pepper/
@@ -70,14 +70,16 @@ local function eval_statement(file, start_i, env)
 end
 
 
-local function pepper_file(file, base_defs)
+local function pepper_file(file, init_pepper, base_defs)
 	local i = 1
 	local defs = {} -- add from command line if needed
 	local if_blocks = {} -- {{starting point, end of statement, truthy statement found, current statement truthy}, ...}
 	local section_removal = {} -- {{start, end, new contents}, ...}
 	
-	for k,v in pairs(base_defs) do
-		defs[k] = v
+	if base_defs then
+		for k,v in pairs(base_defs) do
+			defs[k] = v
+		end
 	end
 
 	function block_removal(e)
@@ -96,12 +98,13 @@ local function pepper_file(file, base_defs)
 		return block
 	end
 	
+	local command_search = init_pepper and "([%w]+)" or "%-%-%[*=*%[*#([%w]+)"
 	
 	while true do
-		local a, b, c = file:find("%-%-%[*=*%[*#(%w*)", i)
-		
+		local a, b, c = file:find(command_search, i)
+
 		if(not a) break	
-		
+				
 		i = b+1
 		
 		if c == "def" then
@@ -112,35 +115,90 @@ local function pepper_file(file, base_defs)
 			defs[name] = val
 			
 			add(section_removal, {a, e})
+			i = e+1
 		
 		elseif c == "if" then
 			local val, e = eval_statement(file, i, defs)
 			val = val and true or false -- turn to boolean
 			
 			add(if_blocks, {a, e, val, val})
+			i = e+1
 	
 		elseif c == "elseif" then
 			local val, e = eval_statement(file, i, defs)
 			local block = block_removal(e)
 					
 			add(if_blocks, {a, e, block[3] or val, not block[3] and val})
+			i = e+1
 		
 		elseif c == "else" then
 			local _, e = find_statement_end(file, i)
 			local block = block_removal(e)
 			
 			add(if_blocks, {a, e, true, not block[3]})
+			i = e+1
 		
 		elseif c == "end" then
 			local _, e = find_statement_end(file, i)
 			local block = block_removal(e)
 			
 			add(section_removal, {a, e})
+			i = e+1
 		
-		elseif c == "insert" then
+		elseif c == "insert" and not init_pepper then
 			local val, e = eval_statement(file, i, defs)
 			
 			add(section_removal, {a, e, val})
+			i = e+1
+		
+		-- .pepper file exclusive instructions
+		elseif #c > 2 and init_pepper then
+			i += 1
+			local a, a2 = find_statement_end(file, i)
+			local par = sub(file, i, a)
+			i = a2+1
+			
+			-- get each parameter separated by whitespace
+			local param, j = {}, 1
+			while true do
+				local a,j2,s = par:find("([%w._%-\\/]+)", j)
+				
+				if a then
+					add(param, s)
+					j = j2+1
+				else
+					break
+				end
+			end
+			
+			if c == "remove" then
+				for s in all(param) do
+					if #s > 1 then
+						rm("/ram/pepper/" .. s)
+					end
+				end	
+							
+			elseif c == "rename" then
+				local from = "/ram/pepper/" .. param[1]
+				local to = "/ram/pepper/" .. param[2]
+				
+				cp(from, to)
+				rm(from)
+							
+			elseif c == "include" then
+				local _, d = pepper_file(fetch("/ram/pepper/" .. param[1]), true, defs)
+				defs = d
+		
+			elseif c == "ignore" then
+				if not defs._pepper_ignore then
+					defs._pepper_ignore = {}
+				end
+				
+				for s in all(param) do
+					add(defs._pepper_ignore, "/ram/pepper/" .. s)
+				end	
+			
+			end
 		end
 	end
 	
@@ -169,7 +227,7 @@ end
 -- make a copy of the current cart to work with
 cp("/ram/cart/", "/ram/pepper/")
 
-function pepper_dir(dir, ignore)
+function pepper_dir(dir, ignore, defs)
 	local files = ls(dir)
 	for f in all(files) do
 		local _f, f = f, dir .. f
@@ -180,21 +238,26 @@ function pepper_dir(dir, ignore)
 						
 			if ty == "file" then
 				if f:ext() == "lua" then
-					store(f, pepper_file(fetch(f)))
+					-- pepper lua file
+					local file = pepper_file(fetch(f), false, defs)
+					store(f, file)
 					print(f)
 				end
 				
 			elseif ty == "folder" then
+				-- check files and folders in this folder.
 				pepper_dir(f)
 			end
 		end
 	end
 end
 
-pepper_dir("/ram/pepper/", {"TODO.lua", "README.lua"})
+-- todo, change what the starting .pepper file is based on argv.
+local file = fetch("/ram/pepper/main.pepper")
+
+local file, defs = pepper_file(file, true)
+
+pepper_dir("/ram/pepper/", defs._pepper_ignore, defs)
 
 -- local file = pepper_file(fetch("/ram/pepper/main.lua"))
 -- store("/ram/pepper/main.lua", file)
-
--- new version of file
-print(file)

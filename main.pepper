@@ -1,1 +1,9 @@
---[[pod_format="raw",created="2024-05-21 18:55:28",modified="2024-05-21 18:55:37",revision=1]]
+--[[pod_format="raw",created="2024-05-21 18:55:28",modified="2024-05-24 00:45:22",revision=186]]
+
+def t 1
+
+remove TODO.lua
+
+rename README.lua dontreadme.lua
+
+ignore dontreadme.lua

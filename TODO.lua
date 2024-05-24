@@ -1,4 +1,4 @@
---[[pod_format="raw",created="2024-05-21 20:04:04",modified="2024-05-21 20:18:55",revision=36]]
+--[[pod_format="raw",created="2024-05-21 20:04:04",modified="2024-05-24 00:45:22",revision=491]]
 --[[
 
 read main.pepper
@@ -19,9 +19,14 @@ turn pepper.lua contents into a function
 		OR
 		start a new initial call with that file (and include current pepper_env)
 		
-	skip <file> ...
+	ignore <file> ...
 		excludes files or directories from being altered
 		can help with speeding up the build process if there's a lot of files
+
+test include command
+
+add error messages for most possible cases
+	probably surround the function call with a coroutine to capture errors
 
 installing pepper window
 	version number? (probably just replace the entire thing)

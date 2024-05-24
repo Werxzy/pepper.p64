@@ -1,4 +1,4 @@
---[[pod_format="raw",created="2024-05-19 15:23:45",modified="2024-05-21 20:18:55",revision=811]]
+--[[pod_format="raw",created="2024-05-19 15:23:45",modified="2024-05-24 00:45:22",revision=1267]]
 -- probably load the files in the correct locations
 -- use a small window
 
@@ -6,8 +6,6 @@
 create_process("/system/util/default_app.lua", {argv={"pepper", "/system/apps/code.p64"}})
 
 include"pepper.lua"
-
---#def t 1
 
 --[[#if t == 0
 
