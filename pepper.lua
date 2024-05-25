@@ -1,4 +1,4 @@
---[[pod_format="raw",created="2024-05-19 15:24:54",modified="2024-05-24 00:45:22",revision=1503]]
+--[[pod_format="raw",created="2024-05-19 15:24:54",modified="2024-05-25 16:30:54",revision=1568]]
 -- contains the code for running the command (look at other commands for examples)
 
 -- probably put the files into /ram/pepper/
@@ -98,6 +98,15 @@ local function pepper_file(file, init_pepper, base_defs)
 		return block
 	end
 	
+	local function block_is_true()
+		for b in all(if_blocks) do
+			if not b[4] then
+				return false
+			end
+		end
+		return true
+	end
+	
 	local command_search = init_pepper and "([%w]+)" or "%-%-%[*=*%[*#([%w]+)"
 	
 	while true do
@@ -110,9 +119,12 @@ local function pepper_file(file, init_pepper, base_defs)
 		if c == "def" then
 			local _,b,name = file:find("(%w)",i)
 			i = b+2
-	
+			
 			local val, e = eval_statement(file, i, defs)
-			defs[name] = val
+			
+			if block_is_true() then
+				defs[name] = val
+			end
 			
 			add(section_removal, {a, e})
 			i = e+1
@@ -158,46 +170,50 @@ local function pepper_file(file, init_pepper, base_defs)
 			local par = sub(file, i, a)
 			i = a2+1
 			
-			-- get each parameter separated by whitespace
-			local param, j = {}, 1
-			while true do
-				local a,j2,s = par:find("([%w._%-\\/]+)", j)
-				
-				if a then
-					add(param, s)
-					j = j2+1
-				else
-					break
-				end
-			end
+			-- only apply instructions if they are within a block that will run
+			if block_is_true() then
 			
-			if c == "remove" then
-				for s in all(param) do
-					if #s > 1 then
-						rm("/ram/pepper/" .. s)
+				-- get each parameter separated by whitespace
+				local param, j = {}, 1
+				while true do
+					local a,j2,s = par:find("([%w._%-\\/]+)", j)
+					
+					if a then
+						add(param, s)
+						j = j2+1
+					else
+						break
 					end
-				end	
-							
-			elseif c == "rename" then
-				local from = "/ram/pepper/" .. param[1]
-				local to = "/ram/pepper/" .. param[2]
-				
-				cp(from, to)
-				rm(from)
-							
-			elseif c == "include" then
-				local _, d = pepper_file(fetch("/ram/pepper/" .. param[1]), true, defs)
-				defs = d
-		
-			elseif c == "ignore" then
-				if not defs._pepper_ignore then
-					defs._pepper_ignore = {}
 				end
 				
-				for s in all(param) do
-					add(defs._pepper_ignore, "/ram/pepper/" .. s)
-				end	
+				if c == "remove" then
+					for s in all(param) do
+						if #s > 1 then
+							rm("/ram/pepper/" .. s)
+						end
+					end	
+								
+				elseif c == "rename" then
+					local from = "/ram/pepper/" .. param[1]
+					local to = "/ram/pepper/" .. param[2]
+					
+					cp(from, to)
+					rm(from)
+								
+				elseif c == "include" then
+					local _, d = pepper_file(fetch("/ram/pepper/" .. param[1]), true, defs)
+					defs = d
 			
+				elseif c == "ignore" then
+					if not defs._pepper_ignore then
+						defs._pepper_ignore = {}
+					end
+					
+					for s in all(param) do
+						add(defs._pepper_ignore, s)
+					end	
+				
+				end
 			end
 		end
 	end
