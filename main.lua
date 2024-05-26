@@ -1,29 +1,14 @@
---[[pod_format="raw",created="2024-05-19 15:23:45",modified="2024-05-24 00:45:22",revision=1267]]
--- probably load the files in the correct locations
--- use a small window
+--[[pod_format="raw",created="2024-05-19 15:23:45",modified="2024-05-26 03:09:57",revision=2037]]
+
+--#if false
+
+include "window_install.lua" 
+
+--[[#else
 
 -- sets up .pepper to open in the code file
 create_process("/system/util/default_app.lua", {argv={"pepper", "/system/apps/code.p64"}})
 
-include"pepper.lua"
+include "window_main.lua"
 
---[[#if t == 0
-
-print("load program")
-
---#elseif t == 1
-
-print("test successful!")
-
---#else]]
-
-print("extra")
-
---#end
-
-print(--#if t
---#insert t
---#else
-"no t value"
---#end
-)
+--#end]]

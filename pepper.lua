@@ -1,8 +1,9 @@
---[[pod_format="raw",created="2024-05-19 15:24:54",modified="2024-05-25 16:30:54",revision=1568]]
+--[[pod_format="raw",created="2024-05-19 15:24:54",modified="2024-05-26 03:09:57",revision=2129]]
 -- contains the code for running the command (look at other commands for examples)
 
 -- probably put the files into /ram/pepper/
 
+local argv = env().argv or {}
 
 local function quicksort(tab, key)
 	local function qs(a, lo, hi)
@@ -240,8 +241,16 @@ local function pepper_file(file, init_pepper, base_defs)
 	return file, defs
 end
 
+-- get from position from the parameter after -f
+local j = "/ram/cart/"
+for i = 1, #argv-1 do
+	if argv[i] == "-f" then
+		j = argv[i + 1]
+	end
+end
+
 -- make a copy of the current cart to work with
-cp("/ram/cart/", "/ram/pepper/")
+cp(j, "/ram/pepper/")
 
 function pepper_dir(dir, ignore, defs)
 	local files = ls(dir)
@@ -269,11 +278,34 @@ function pepper_dir(dir, ignore, defs)
 end
 
 -- todo, change what the starting .pepper file is based on argv.
-local file = fetch("/ram/pepper/main.pepper")
+local file, defs = fetch("/ram/pepper/" .. (argv[2] or "main") .. ".pepper"), {}
 
-local file, defs = pepper_file(file, true)
+if file then
+	file, defs = pepper_file(file, true)
+end
 
 pepper_dir("/ram/pepper/", defs._pepper_ignore, defs)
+
+if argv[1] == "run" then
+	create_process("/ram/pepper/main.lua")
+	
+elseif argv[1] == "export" then
+	local j = nil
+	for i = 1,#argv-1 do
+		if argv[i] == "-t" then
+			j = argv[i + 1]
+		end
+	end
+	
+	if j then
+		cp("/ram/pepper/", j)
+	else
+		notify"no export location provided"
+		-- probably have a default location
+	end
+
+end
+
 
 -- local file = pepper_file(fetch("/ram/pepper/main.lua"))
 -- store("/ram/pepper/main.lua", file)
