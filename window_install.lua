@@ -1,4 +1,4 @@
---[[pod_format="raw",created="2024-05-25 22:13:23",modified="2024-05-26 03:09:57",revision=278]]
+--[[pod_format="raw",created="2024-05-25 22:13:23",modified="2024-05-27 03:24:13",revision=616]]
 function _init()
 	wind = window{
 		width = 200,
@@ -10,7 +10,8 @@ function _init()
 end
 
 function _draw()
-	cls(6)
+--	cls(6)
+	cls(key"ctrl" and key"p" and 7 or 6) -- should work unfocused
 	
 	gui:draw_all()
 end
@@ -45,14 +46,61 @@ function init_gui()
 end
 
 function install_pepper()
-	create_process(pwd() .. "/pepper.lua", {argv = split"export main -f " .. pwd() .. " -t /appdata/system/desktop2/pepper.p64"}})
+	mkdir"/appdata/system/tooltray"
+	create_process(pwd() .. "/pepper.lua", {argv = split("export main -f " .. pwd() .. "/ -t /appdata/system/tooltray/pepper.p64", " ", false)})
+	
+	modify_startup(true)
 end
 
 function uninstall_pepper()
-
+	-- removes the .p64 file and the process creation
+	if fstat("/appdata/system/tooltray/pepper.p64") then
+		rm("/appdata/system/tooltray/pepper.p64")
+	end
+	modify_startup()
 end
 
 function run_pepper_once()
 	include "window_main.lua"
 	_init()
+	-- TODO: instead pepper the file and put it into ram/compost
+	-- load the file from ram with create process
+end
+
+function modify_startup(process)
+	local file = fetch("/appdata/system/startup.lua")
+	if not file then
+		file = ""
+	end
+	
+	-- just in case it needs to update
+	file = remove_pepper_process(file)
+	
+	if process then
+		file ..= [[
+--PEPPER_PROCESS-- 
+-- do not add anything extra between the comments
+-- that you don't want removed along with pepper.p64
+create_process(/appdata/system/tooltray/pepper.p64, {window_attribs = {workspace = "tooltray", x=2, y=2}})
+--PEPPER_END--
+]]	
+	end
+
+	store("/appdata/system/startup.lua", file)
+end
+
+function remove_pepper_process(file)
+	local a, b = file:find("%-%-PEPPER_PROCESS%-%-.-%-%-PEPPER_END%-%-\n?")
+	
+	if(not a) return file, false
+	
+	local file2 = ""
+	if a > 1 then
+		file2 ..= sub(file, 1, a-1)
+	end
+	if b < #file then
+		file2 ..= sub(file, b+1)
+	end
+	
+	return file2, true
 end

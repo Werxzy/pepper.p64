@@ -1,4 +1,4 @@
---[[pod_format="raw",created="2024-05-19 15:24:54",modified="2024-05-26 03:09:57",revision=2129]]
+--[[pod_format="raw",created="2024-05-19 15:24:54",modified="2024-05-27 03:24:13",revision=2372]]
 -- contains the code for running the command (look at other commands for examples)
 
 -- probably put the files into /ram/pepper/
@@ -296,7 +296,7 @@ elseif argv[1] == "export" then
 			j = argv[i + 1]
 		end
 	end
-	
+
 	if j then
 		cp("/ram/pepper/", j)
 	else
