@@ -1,4 +1,4 @@
---[[pod_format="raw",created="2024-05-19 15:24:54",modified="2024-05-28 20:20:26",revision=2843]]
+--[[pod_format="raw",created="2024-05-19 15:24:54",modified="2024-05-28 23:27:04",revision=2899]]
 -- contains the code for running the command (look at other commands for examples)
 
 -- probably put the files into /ram/pepper/
@@ -27,7 +27,7 @@ local function add_error_path(e, path)
 end
 
 -- displays the error using the infobar
-local function display_error(e)
+local function display_error(e, base_path)
 	assert(e.file)
 	local i, line_number, line_text = 1, 1
 	while true do
@@ -38,9 +38,9 @@ local function display_error(e)
 		i += 1
 		line_number += 1
 	end
-	
+
 	send_message(3, {event="report_error", content = e.message})
-	send_message(3, {event="report_error", content = e.path .. " : line " .. line_number})
+	send_message(3, {event="report_error", content = base_path .. sub(e.path, 13) .. " : line " .. line_number})
 	send_message(3, {event="report_error", content = line_text})
 end
 
@@ -311,18 +311,24 @@ local function pepper_file(file, init_pepper, base_defs)
 end
 
 -- get from position from the parameter after -f
-local j = "/ram/cart/"
+local base_path = "/ram/cart/"
 for i = 1, #argv-1 do
 	if argv[i] == "-f" then
-		j = argv[i + 1]
+		base_path = argv[i + 1]
 	end
 end
 
+if base_path[#base_path] ~= "/" then
+	base_path ..= "/"
+end
+
 -- make a copy of the current cart to work with
-cp(j, "/ram/pepper/")
+cp(base_path, "/ram/pepper/")
+
+local keep_pepper = count(argv, "-k") > 0
 
 -- applies pepper function do whole directory
-function function pepper_dir(dir, ignore, defs)
+local function pepper_dir(dir, ignore, defs)
 	local files = ls(dir)
 	for f in all(files) do
 		local _f, f = f, dir .. f
@@ -343,6 +349,9 @@ function function pepper_dir(dir, ignore, defs)
 					
 					store(f, file)
 					print(f)
+				
+				elseif not keep_pepper and f:ext() == "pepper" then
+					rm(f)
 				end
 				
 			elseif ty == "folder" then
@@ -361,7 +370,7 @@ if file then
 	
 	if is_error(f) then
 		add_error_path(f, path)
-		display_error(f)
+		display_error(f, base_path)
 		return
 	end
 	
@@ -371,7 +380,7 @@ end
 local err = pepper_dir("/ram/pepper/", defs._pepper_ignore, defs)
 
 if is_error(err) then
-	display_error(err)
+	display_error(err, base_path)
 	
 elseif argv[1] == "run" then
 	create_process("/ram/pepper/main.lua")
