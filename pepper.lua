@@ -1,9 +1,44 @@
---[[pod_format="raw",created="2024-05-19 15:24:54",modified="2024-05-27 03:24:13",revision=2372]]
+--[[pod_format="raw",created="2024-05-19 15:24:54",modified="2024-05-28 04:38:32",revision=2706]]
 -- contains the code for running the command (look at other commands for examples)
 
 -- probably put the files into /ram/pepper/
 
 local argv = env().argv or {}
+
+-- i is the ith character
+function new_error(i, file, message)
+	return {
+		is_error = true, 
+		i = i, 
+		file = file, 
+		message = message
+	}
+end
+
+function is_error(e)
+	return type(e) == "table" and e.is_error
+end
+
+function add_error_path(e, path)
+	e.path = e.path or path
+end
+
+function display_error(e)
+	assert(e.file)
+	local i, line_number, line_text = 1, 1
+	while true do
+		_, i, line_text = e.file:find("([^\n]*)\n", i)
+		if i >= e.i then
+			break
+		end
+		i += 1
+		line_number += 1
+	end
+	
+	send_message(3, {event="report_error", content = e.message})
+	send_message(3, {event="report_error", content = e.path .. " : line " .. line_number})
+	send_message(3, {event="report_error", content = line_text})
+end
 
 local function quicksort(tab, key)
 	local function qs(a, lo, hi)
@@ -63,9 +98,10 @@ local function eval_statement(file, start_i, env)
 	-- insert into function
 	local f, err = load("_val = " .. statement, nil, "t", env)
 	
-	-- invalid line
-	if(not f) error("invalid statement: " .. statement, 0)
-
+	-- usually syntax error
+	if(not f) return new_error(start_i, file, "Invalid statement: " .. statement)
+	
+-- TODO wrap in coroutine since the one above doesn't check if the statement causes and error
 	f()
 	return env._val, a2
 end
@@ -87,7 +123,8 @@ local function pepper_file(file, init_pepper, base_defs)
 		local block = deli(if_blocks)
 	
 		-- invalid block
-		if(not block) error("unclosed if/else block", 2)
+		--if(not block) error("unclosed if/else block", 2)
+		if(not block) return new_error(i, file, "Missing if statement.")
 		
 		if block[4] then -- keep block contents
 			add(section_removal, {block[1], block[2]})
@@ -122,6 +159,7 @@ local function pepper_file(file, init_pepper, base_defs)
 			i = b+2
 			
 			local val, e = eval_statement(file, i, defs)
+			if(is_error(val)) return val
 			
 			if block_is_true() then
 				defs[name] = val
@@ -132,6 +170,7 @@ local function pepper_file(file, init_pepper, base_defs)
 		
 		elseif c == "if" then
 			local val, e = eval_statement(file, i, defs)
+			if(is_error(val)) return val
 			val = val and true or false -- turn to boolean
 			
 			add(if_blocks, {a, e, val, val})
@@ -139,7 +178,9 @@ local function pepper_file(file, init_pepper, base_defs)
 	
 		elseif c == "elseif" then
 			local val, e = eval_statement(file, i, defs)
+			if(is_error(val)) return val
 			local block = block_removal(e)
+			if(is_error(block)) return block
 					
 			add(if_blocks, {a, e, block[3] or val, not block[3] and val})
 			i = e+1
@@ -147,6 +188,7 @@ local function pepper_file(file, init_pepper, base_defs)
 		elseif c == "else" then
 			local _, e = find_statement_end(file, i)
 			local block = block_removal(e)
+			if(is_error(block)) return block
 			
 			add(if_blocks, {a, e, true, not block[3]})
 			i = e+1
@@ -154,12 +196,14 @@ local function pepper_file(file, init_pepper, base_defs)
 		elseif c == "end" then
 			local _, e = find_statement_end(file, i)
 			local block = block_removal(e)
+			if(is_error(block)) return block
 			
 			add(section_removal, {a, e})
 			i = e+1
 		
 		elseif c == "insert" and not init_pepper then
 			local val, e = eval_statement(file, i, defs)
+			if(is_error(val)) return val
 			
 			add(section_removal, {a, e, val})
 			i = e+1
@@ -202,7 +246,16 @@ local function pepper_file(file, init_pepper, base_defs)
 					rm(from)
 								
 				elseif c == "include" then
-					local _, d = pepper_file(fetch("/ram/pepper/" .. param[1]), true, defs)
+					local path = "/ram/pepper/" .. param[1]
+					local new_file = fetch(path)
+
+					if(not new_file) return new_error(a, file, "missing file : " .. path)
+					
+					local err, d = pepper_file(new_file, true, defs)
+					if is_error(err) then
+						add_error_path(err, path)
+						return err
+					end
 					defs = d
 			
 				elseif c == "ignore" then
@@ -217,6 +270,10 @@ local function pepper_file(file, init_pepper, base_defs)
 				end
 			end
 		end
+	end
+	
+	if #if_blocks > 0 then
+		return new_error(#file, file, "Unclosed if/else block.")
 	end
 	
 	-- merge overlapping sections
@@ -264,7 +321,14 @@ function pepper_dir(dir, ignore, defs)
 			if ty == "file" then
 				if f:ext() == "lua" then
 					-- pepper lua file
-					local file = pepper_file(fetch(f), false, defs)
+					local file_text = fetch(f)
+					local file = pepper_file(file_text, false, defs)
+					
+					if is_error(file) then
+						add_error_path(file, f)
+						return file
+					end
+					
 					store(f, file)
 					print(f)
 				end
@@ -278,15 +342,27 @@ function pepper_dir(dir, ignore, defs)
 end
 
 -- todo, change what the starting .pepper file is based on argv.
-local file, defs = fetch("/ram/pepper/" .. (argv[2] or "main") .. ".pepper"), {}
+local path = "/ram/pepper/" .. (argv[2] or "main") .. ".pepper"
+local file, defs = fetch(path), {}
 
 if file then
-	file, defs = pepper_file(file, true)
+	local f, d = pepper_file(file, true)
+	
+	if is_error(f) then
+		add_error_path(f, path)
+		display_error(f)
+		return
+	end
+	
+	file, defs = f, d
 end
 
-pepper_dir("/ram/pepper/", defs._pepper_ignore, defs)
+local err = pepper_dir("/ram/pepper/", defs._pepper_ignore, defs)
 
-if argv[1] == "run" then
+if is_error(err) then
+	display_error(err)
+	
+elseif argv[1] == "run" then
 	create_process("/ram/pepper/main.lua")
 	
 elseif argv[1] == "export" then
@@ -302,6 +378,7 @@ elseif argv[1] == "export" then
 	else
 		notify"no export location provided"
 		-- probably have a default location
+		-- also warn against overwritting the original project
 	end
 
 end

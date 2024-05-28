@@ -1,4 +1,4 @@
---[[pod_format="raw",created="2024-05-25 22:13:23",modified="2024-05-27 03:24:13",revision=616]]
+--[[pod_format="raw",created="2024-05-25 22:13:23",modified="2024-05-28 04:38:32",revision=862]]
 function _init()
 	wind = window{
 		width = 200,

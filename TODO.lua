@@ -1,4 +1,4 @@
---[[pod_format="raw",created="2024-05-21 20:04:04",modified="2024-05-27 03:24:13",revision=585]]
+--[[pod_format="raw",created="2024-05-21 20:04:04",modified="2024-05-28 04:38:32",revision=823]]
 --[[
 
 add none option?
@@ -16,6 +16,11 @@ add error messages for most possible cases
 	error message to "report_error"
 		like in startup.lua
 		send_message(3, {event="report_error", content = "** system version mismatch **"})
+
+fix file path on error messages?
+	currently mentions /ram/pepper/... which isn't useful to the user
+	also could do proper linking on click
+		look at infobar for more info on "report_error" event
 
 improve ui
 	
