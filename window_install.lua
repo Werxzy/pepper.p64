@@ -1,4 +1,4 @@
---[[pod_format="raw",created="2024-05-25 22:13:23",modified="2024-05-28 04:38:32",revision=862]]
+--[[pod_format="raw",created="2024-05-25 22:13:23",modified="2024-05-28 20:20:26",revision=963]]
 function _init()
 	wind = window{
 		width = 200,
@@ -81,7 +81,7 @@ function modify_startup(process)
 --PEPPER_PROCESS-- 
 -- do not add anything extra between the comments
 -- that you don't want removed along with pepper.p64
-create_process(/appdata/system/tooltray/pepper.p64, {window_attribs = {workspace = "tooltray", x=2, y=2}})
+create_process("/appdata/system/tooltray/pepper.p64", {window_attribs = {workspace = "tooltray", x=2, y=2}})
 --PEPPER_END--
 ]]	
 	end

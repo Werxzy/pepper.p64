@@ -1,12 +1,13 @@
---[[pod_format="raw",created="2024-05-19 15:24:54",modified="2024-05-28 04:38:32",revision=2706]]
+--[[pod_format="raw",created="2024-05-19 15:24:54",modified="2024-05-28 20:20:26",revision=2843]]
 -- contains the code for running the command (look at other commands for examples)
 
 -- probably put the files into /ram/pepper/
 
 local argv = env().argv or {}
 
--- i is the ith character
-function new_error(i, file, message)
+-- creates a new error
+-- (this probably could have been simplified with coroutines)
+local function new_error(i, file, message)
 	return {
 		is_error = true, 
 		i = i, 
@@ -15,15 +16,18 @@ function new_error(i, file, message)
 	}
 end
 
-function is_error(e)
+-- checks if a value is an error report
+local function is_error(e)
 	return type(e) == "table" and e.is_error
 end
 
-function add_error_path(e, path)
+-- path needs to be updated separately due to where it's known.
+local function add_error_path(e, path)
 	e.path = e.path or path
 end
 
-function display_error(e)
+-- displays the error using the infobar
+local function display_error(e)
 	assert(e.file)
 	local i, line_number, line_text = 1, 1
 	while true do
@@ -40,6 +44,7 @@ function display_error(e)
 	send_message(3, {event="report_error", content = line_text})
 end
 
+-- sorts a table of tables using a key
 local function quicksort(tab, key)
 	local function qs(a, lo, hi)
 	    if lo >= hi or lo < 1 then
@@ -65,7 +70,7 @@ local function quicksort(tab, key)
     qs(tab, 1, #tab)
 end
 
-
+-- finds the next end of statement either being a new line, end of a multiline comment, or the end of file
 local function find_statement_end(file, start_i)
 	-- either cut off at ]] or the end of the line
 	local a, a2 = file:find("\n", start_i)
@@ -91,22 +96,29 @@ local function find_statement_end(file, start_i)
 	return a, a2
 end
 
+-- evaluates section of code
 local function eval_statement(file, start_i, env)
 	local a, a2 = find_statement_end(file, start_i)
 	local statement = sub(file, start_i, a)
 
 	-- insert into function
-	local f, err = load("_val = " .. statement, nil, "t", env)
+	local f = load("_val = " .. statement, nil, "t", env)
 	
 	-- usually syntax error
 	if(not f) return new_error(start_i, file, "Invalid statement: " .. statement)
 	
--- TODO wrap in coroutine since the one above doesn't check if the statement causes and error
-	f()
+	-- uses a coroutine to capture any errors caused by the statement
+	local ok, err = coresume(cocreate(f))
+	if not ok then
+		return new_error(start_i, file, sub(err, 5)) -- always starts with ":1: "
+	end
+	
 	return env._val, a2
 end
 
-
+-- applies pepper preprocessing on a file
+-- init_pepper determines if it will search for "--#"
+-- base_defs contains env variables for pepper statements
 local function pepper_file(file, init_pepper, base_defs)
 	local i = 1
 	local defs = {} -- add from command line if needed
@@ -119,7 +131,7 @@ local function pepper_file(file, init_pepper, base_defs)
 		end
 	end
 
-	function block_removal(e)
+	local function block_removal(e)
 		local block = deli(if_blocks)
 	
 		-- invalid block
@@ -309,7 +321,8 @@ end
 -- make a copy of the current cart to work with
 cp(j, "/ram/pepper/")
 
-function pepper_dir(dir, ignore, defs)
+-- applies pepper function do whole directory
+function function pepper_dir(dir, ignore, defs)
 	local files = ls(dir)
 	for f in all(files) do
 		local _f, f = f, dir .. f
@@ -321,8 +334,7 @@ function pepper_dir(dir, ignore, defs)
 			if ty == "file" then
 				if f:ext() == "lua" then
 					-- pepper lua file
-					local file_text = fetch(f)
-					local file = pepper_file(file_text, false, defs)
+					local file = pepper_file(fetch(f), false, defs)
 					
 					if is_error(file) then
 						add_error_path(file, f)
@@ -341,7 +353,6 @@ function pepper_dir(dir, ignore, defs)
 	end
 end
 
--- todo, change what the starting .pepper file is based on argv.
 local path = "/ram/pepper/" .. (argv[2] or "main") .. ".pepper"
 local file, defs = fetch(path), {}
 
@@ -382,7 +393,3 @@ elseif argv[1] == "export" then
 	end
 
 end
-
-
--- local file = pepper_file(fetch("/ram/pepper/main.lua"))
--- store("/ram/pepper/main.lua", file)
