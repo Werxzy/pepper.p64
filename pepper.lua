@@ -1,4 +1,4 @@
---[[pod_format="raw",created="2024-05-19 15:24:54",modified="2024-05-28 23:27:04",revision=2899]]
+--[[pod_format="raw",created="2024-05-19 15:24:54",modified="2024-05-29 01:27:58",revision=3148]]
 -- contains the code for running the command (look at other commands for examples)
 
 -- probably put the files into /ram/pepper/
@@ -39,7 +39,7 @@ local function display_error(e, base_path)
 		line_number += 1
 	end
 
-	send_message(3, {event="report_error", content = e.message})
+	send_message(3, {event="report_error", content = "Pepper build error : " .. e.message})
 	send_message(3, {event="report_error", content = base_path .. sub(e.path, 13) .. " : line " .. line_number})
 	send_message(3, {event="report_error", content = line_text})
 end
@@ -116,6 +116,8 @@ local function eval_statement(file, start_i, env)
 	return env._val, a2
 end
 
+
+local include_files = {}
 -- applies pepper preprocessing on a file
 -- init_pepper determines if it will search for "--#"
 -- base_defs contains env variables for pepper statements
@@ -259,16 +261,21 @@ local function pepper_file(file, init_pepper, base_defs)
 								
 				elseif c == "include" then
 					local path = "/ram/pepper/" .. param[1]
+					if count(include_files, path) > 3 then
+						return new_error(a, file, "infinite loop detected")
+					end
+					
 					local new_file = fetch(path)
-
 					if(not new_file) return new_error(a, file, "missing file : " .. path)
 					
+					add(include_files, path)
 					local err, d = pepper_file(new_file, true, defs)
 					if is_error(err) then
 						add_error_path(err, path)
 						return err
 					end
 					defs = d
+					del(include_files, path)
 			
 				elseif c == "ignore" then
 					if not defs._pepper_ignore then

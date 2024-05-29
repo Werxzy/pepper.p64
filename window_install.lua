@@ -1,4 +1,4 @@
---[[pod_format="raw",created="2024-05-25 22:13:23",modified="2024-05-28 23:27:04",revision=1011]]
+--[[pod_format="raw",created="2024-05-25 22:13:23",modified="2024-05-29 01:27:58",revision=1245]]
 function _init()
 	wind = window{
 		width = 200,
@@ -10,8 +10,10 @@ function _init()
 end
 
 function _draw()
---	cls(6)
-	cls(key"ctrl" and key"p" and 7 or 6) -- should work unfocused
+	cls(6)
+--	cls(key"ctrl" and key"p" and 7 or 6) -- should work unfocused
+
+	spr(1, 20, 20)
 	
 	gui:draw_all()
 end

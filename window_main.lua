@@ -1,4 +1,4 @@
---[[pod_format="raw",created="2024-05-25 22:10:24",modified="2024-05-28 23:27:04",revision=472]]
+--[[pod_format="raw",created="2024-05-25 22:10:24",modified="2024-05-29 01:27:58",revision=745]]
 function _init()
 	wind = window{
 		width = 200,
@@ -13,8 +13,14 @@ end
 
 function _draw()
 	cls(6)
+	spr(1,1,1)
 	
+	if #run_modes > 0 then
+		rectfill(1, 15, window_width - 2, 15, 0xd)
+	end
+
 	gui:draw_all()
+	spr(2,16,2)
 end
 
 function _update()
@@ -34,13 +40,19 @@ end
 
 function init_gui()
 	gui = create_gui()
-	last_b = nil
+	last_b = {
+		x = 14,
+		y = 1,
+		width = 0,
+	}
 	
-	next_button("Refresh",
+	--local b = next_button("Refresh",
+	local b = next_button("  ",
 		function()
-			run_modes = {}
-			
+			run_modes = {"None"}
+
 			for f in all(ls("/ram/cart/")) do
+				
 				if f:ext() == "pepper" then
 					add(run_modes, split(f, ".", false)[1])
 				end
@@ -48,6 +60,7 @@ function init_gui()
 			
 			init_gui()
 		end)
+	b.width = 14
 		
 	if #run_modes > 0 then
 		next_button("Run", pepper_run)	
@@ -59,11 +72,11 @@ function init_gui()
 
 	last_b = {
 		x = 0,
-		y = last_b.y + last_b.height,
+		y = last_b.y + last_b.height+2,
 		width = 0,
 	}
 	
-	current_mode = nil
+	current_mode = "None"
 	mode_buttons = {}		
 	
 	-- make a button for each pepper file
@@ -87,9 +100,14 @@ function init_gui()
 		add(mode_buttons, b)
 	end
 	
+	if #mode_buttons > 0 then
+		mode_buttons[1].click()
+	end 
+	
 	-- change window size based on the contents
-	wind = window{
-		width = max(max(top_width, last_b.x + last_b.width), 75) + 1,
+	window_width = max(max(top_width, last_b.x + last_b.width), 75) + 1
+	window{
+		width = window_width,
 		height = #mode_buttons > 0 and (last_b.y + last_b.height) or top_height,
 		title = "Pepper"
 	}
