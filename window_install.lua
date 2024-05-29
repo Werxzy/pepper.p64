@@ -1,4 +1,4 @@
---[[pod_format="raw",created="2024-05-25 22:13:23",modified="2024-05-29 19:20:50",revision=1700]]
+--[[pod_format="raw",created="2024-05-25 22:13:23",modified="2024-05-29 23:44:07",revision=1720]]
 function _init()
 	wind = window{
 		width = 200,
@@ -57,7 +57,7 @@ function install_pepper()
 	mkdir"/appdata/system/tooltray"
 	create_process(pwd() .. "/pepper.lua", {argv = split("export main -f " .. pwd() .. "/ -t /appdata/system/tooltray/pepper.p64", " ", false)})
 	modify_startup(true)
-	notify"Pepper Installed at /appdata/sysstem/tooltray/"
+	notify"Pepper Installed at /appdata/system/tooltray/"
 end
 
 function uninstall_pepper()
