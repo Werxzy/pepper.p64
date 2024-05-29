@@ -1,4 +1,4 @@
---[[pod_format="raw",created="2024-05-25 22:10:24",modified="2024-05-29 07:31:08",revision=1191]]
+--[[pod_format="raw",created="2024-05-25 22:10:24",modified="2024-05-29 17:53:38",revision=1353]]
 function _init()
 	wind = window{
 		width = 200,
@@ -147,7 +147,7 @@ end
 
 on_event("export_done", function(msg)
 	create_process("/system/apps/filenav.p64", 
-				{path=path, intention="save_file_as", use_ext = "p64", window_attribs={workspace = "current", autoclose=true}})
+				{path="/", intention="save_file_as", use_ext = "p64", window_attribs={workspace = "current", autoclose=true}})
 end)
 
 on_event("save_file_as", function(msg)

@@ -1,4 +1,4 @@
---[[pod_format="raw",created="2024-05-25 22:13:23",modified="2024-05-29 02:08:49",revision=1263]]
+--[[pod_format="raw",created="2024-05-25 22:13:23",modified="2024-05-29 17:53:38",revision=1418]]
 function _init()
 	wind = window{
 		width = 200,
@@ -50,7 +50,6 @@ end
 function install_pepper()
 	mkdir"/appdata/system/tooltray"
 	create_process(pwd() .. "/pepper.lua", {argv = split("export main -f " .. pwd() .. "/ -t /appdata/system/tooltray/pepper.p64", " ", false)})
-	
 	modify_startup(true)
 end
 
@@ -58,6 +57,9 @@ function uninstall_pepper()
 	-- removes the .p64 file and the process creation
 	if fstat("/appdata/system/tooltray/pepper.p64") then
 		rm("/appdata/system/tooltray/pepper.p64")
+	end
+	if fstat("/system/util/pepper.lua") then
+		rm("/system/util/pepper.lua")
 	end
 	modify_startup()
 end
@@ -84,6 +86,8 @@ function modify_startup(process)
 -- do not add anything extra between the comments
 -- that you don't want removed along with pepper.p64
 create_process("/appdata/system/tooltray/pepper.p64", {window_attribs = {workspace = "tooltray", x=2, y=2}})
+-- so other programs may use pepper
+cp("/appdata/system/tooltray/pepper.p64/pepper.lua", "/system/util/pepper.lua")
 --PEPPER_END--
 ]]	
 	end
@@ -106,3 +110,7 @@ function remove_pepper_process(file)
 	
 	return file2, true
 end
+
+on_event("export_done", function(msg)
+	cp("/appdata/system/tooltray/pepper.p64/pepper.lua", "/system/util/pepper.lua")
+end)

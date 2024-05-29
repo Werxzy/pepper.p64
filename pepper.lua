@@ -1,9 +1,151 @@
---[[pod_format="raw",created="2024-05-19 15:24:54",modified="2024-05-29 07:31:08",revision=3477]]
+--[[pod_format="raw",created="2024-05-19 15:24:54",modified="2024-05-29 17:53:38",revision=3638]]
 -- contains the code for running the command (look at other commands for examples)
 
 -- probably put the files into /ram/pepper/
 
 local argv = env().argv or {}
+
+if argv[1] == "help" then
+	print([===[
+
+== base syntax ==
+
+	Instructions are only recognized after --#
+	Multi-line comments are allowed.
+	
+	Warning, this will track all instances of --# in .lua files.
+
+--#WORD
+
+--[[#WORD	
+]]
+
+--[=[#WORD	
+]=]
+
+== define values ==
+
+	Using def, the second parameter denotes the name
+	while anything afterwords on the same is ran in lua.
+	
+	Defined values only exist within the file they're defined in.
+
+--#def debug true
+--#def length 2 * 3
+--#def area length * 4
+	
+
+== if/else blocks ==
+
+	if/else blocks denote sections of code that are to be removed
+	when building with pepper, before running or exporting.
+
+--[[#if debug
+print("Only run if debug is true")
+--#end]]
+
+--#if not area or area == 0
+print("Run even without pepper")
+print("Or run if the above statement is true")
+
+--[[#else
+print("Multi-line comments prevent statement from being run")
+print("")
+
+--#end]]
+
+--#if false
+--[[#elseif debug
+--#else
+--#end]]
+
+--[[#if debug
+--#elseif false]]
+print("While this is also valid")
+print("it's recommended to have the first block always be the default")
+--[[#else
+--#end]]
+
+== insert ==
+
+	Insert defined values into code.
+	(This probably needs some work)
+
+value = 
+--#if area
+--#insert area
+--#else
+	3
+--#end
+
+	or?
+
+--#if not area
+value = 3
+--[[#else
+value = --#insert area
+--#end]]
+
+==== .pepper files only ====
+
+	pepper files do not require --# before every instruction.
+	ALSO! all values defined inside a .pepper file are defined
+	in ALL peppered files.
+
+== remove ==
+
+	Remove one or more files or folders before building.
+	Similar to the command rm.
+	Paths are relative to the provided base directory.
+
+remove todo.lua sfx/
+
+== rename ==
+
+	Renames or moves a file or folder before building.
+	similar to the command cp.
+	Paths are relative to the provided base directory.
+	
+rename demo/0.map map/0.map
+
+== include ==
+	
+	Include another .pepper file to share instructions between.
+
+include default.pepper
+
+== ignore ==
+
+	Skips specified one or more files or folders in the build process.
+	Can help with build times if there are a lot of files.
+	Skipped files are still included in the final build.
+	
+ignore gfx/ sfx/ map/ src/ gui.lua
+
+]===])
+	exit()
+	return
+end
+
+if argv[1] ~= "run" and argv[1] ~= "export" then
+	print([[
+pepper run [.pepper] [-f | -k]
+	builds the current project and runs
+	[.pepper]		starting pepper parameter file
+					if no (or an invalid) file is provided, no initial pepper will be ran
+	-f <path>		changes the base directory from /ram/cart/
+	-k				keeps .pepper files after build
+	
+pepper export [.pepper] [-f | -t | -k]
+	build the current project and copies it to a given location, if provided
+	-t <path>		target location for the project
+	
+pepper help
+	provides extra documentation
+]])
+	exit()
+	return
+end
 
 -- creates a new error
 -- (this probably could have been simplified with coroutines)
@@ -400,16 +542,10 @@ elseif argv[1] == "export" then
 		end
 	end
 	
-	
-			
 	if j then
 		cp("/ram/pepper/", j)
-	else
-		--"no export location provided"
-		-- probably have a default location
-		-- also warn against overwritting the original project
-		send_message(env().parent_pid, -- env().parent_pid, 
-			{event="export_done"})
 	end
-
+	
+	send_message(env().parent_pid, -- env().parent_pid, 
+		{event="export_done"})
 end
