@@ -1,4 +1,4 @@
---[[pod_format="raw",created="2024-05-21 18:55:28",modified="2024-05-29 17:53:38",revision=964]]
+--[[pod_format="raw",created="2024-05-21 18:55:28",modified="2024-05-29 18:30:57",revision=1065]]
 
 ignore pepper.lua
 
@@ -6,6 +6,4 @@ def t 1
 
 remove TODO.lua sfx/ map/
 
-rename README.lua dontreadme.lua
-
-ignore dontreadme.lua
+ignore README.lua

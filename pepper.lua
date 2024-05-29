@@ -1,4 +1,4 @@
---[[pod_format="raw",created="2024-05-19 15:24:54",modified="2024-05-29 17:53:38",revision=3638]]
+--[[pod_format="raw",created="2024-05-19 15:24:54",modified="2024-05-29 18:30:57",revision=3754]]
 -- contains the code for running the command (look at other commands for examples)
 
 -- probably put the files into /ram/pepper/
@@ -6,7 +6,7 @@
 local argv = env().argv or {}
 
 if argv[1] == "help" then
-	print([===[
+	helps = {syntax = [===[
 
 == base syntax ==
 
@@ -22,6 +22,9 @@ if argv[1] == "help" then
 
 --[=[#WORD	
 ]=]
+]===],
+
+	def = [===[
 
 == define values ==
 
@@ -33,7 +36,9 @@ if argv[1] == "help" then
 --#def debug true
 --#def length 2 * 3
 --#def area length * 4
-	
+]===],
+
+	["if"] = [===[	
 
 == if/else blocks ==
 
@@ -65,7 +70,10 @@ print("While this is also valid")
 print("it's recommended to have the first block always be the default")
 --[[#else
 --#end]]
+]===],
 
+	insert = [===[
+	
 == insert ==
 
 	Insert defined values into code.
@@ -85,12 +93,15 @@ value = 3
 --[[#else
 value = --#insert area
 --#end]]
-
+]===],
+	
+	build = [===[
+	
 ==== .pepper files only ====
-
-	pepper files do not require --# before every instruction.
-	ALSO! all values defined inside a .pepper file are defined
-	in ALL peppered files.
+	
+	Add .pepper files to the base directory to define starting
+	parameters of the build.
+	.pepper files do not require --# before every instruction.
 
 == remove ==
 
@@ -121,22 +132,31 @@ include default.pepper
 	Skipped files are still included in the final build.
 	
 ignore gfx/ sfx/ map/ src/ gui.lua
+]===]}
 
-]===])
+	print(helps[argv[2]] or [[
+pepper help [topic]
+	syntax
+	def
+	if
+	insert
+	build
+]])
 	exit()
 	return
 end
 
 if argv[1] ~= "run" and argv[1] ~= "export" then
 	print([[
-pepper run [.pepper] [-f | -k]
+pepper run [.pepper] [-f | -k | -s]
 	builds the current project and runs
 	[.pepper]		starting pepper parameter file
 					if no (or an invalid) file is provided, no initial pepper will be ran
 	-f <path>		changes the base directory from /ram/cart/
 	-k				keeps .pepper files after build
+	-s				skip the copy directory step
 	
-pepper export [.pepper] [-f | -t | -k]
+pepper export [.pepper] [-f | -t | -k | -s]
 	build the current project and copies it to a given location, if provided
 	-t <path>		target location for the project
 	
@@ -472,7 +492,11 @@ if base_path[#base_path] ~= "/" then
 end
 
 -- make a copy of the current cart to work with
-cp(base_path, "/ram/pepper/")
+if count(argv, "-s") == 0 then
+	cp(base_path, "/ram/pepper/")
+else
+	base_path = "/"
+end
 
 local keep_pepper = count(argv, "-k") > 0
 

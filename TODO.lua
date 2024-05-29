@@ -1,4 +1,4 @@
---[[pod_format="raw",created="2024-05-21 20:04:04",modified="2024-05-29 17:53:38",revision=1641]]
+--[[pod_format="raw",created="2024-05-21 20:04:04",modified="2024-05-29 18:30:57",revision=1743]]
 --[[
 
 improve ui
@@ -13,6 +13,9 @@ custom instruction signals?
 		signal ---- 
 		signal --
 	would need to start with a comment to not ruin code
+	
+include for code?
+
 
 --probably not possible yet--
 
