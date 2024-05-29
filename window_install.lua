@@ -1,8 +1,8 @@
---[[pod_format="raw",created="2024-05-25 22:13:23",modified="2024-05-29 18:30:57",revision=1518]]
+--[[pod_format="raw",created="2024-05-25 22:13:23",modified="2024-05-29 19:20:50",revision=1700]]
 function _init()
 	wind = window{
 		width = 200,
-		height = 90,
+		height = 100,
 		title = "Pepper Installer"
 	}
 		
@@ -13,7 +13,13 @@ function _draw()
 	cls(6)
 --	cls(key"ctrl" and key"p" and 7 or 6) -- should work unfocused
 
-	spr(1, 20, 20)
+	spr(1, 10, 15)
+	
+	print([[
+After installing, reboot to have
+pepper appear in the tooltray,
+or use the pepper command in
+the terminal for more info.]], 30, 15, 1)
 	
 	gui:draw_all()
 end
@@ -26,21 +32,21 @@ function init_gui()
 	gui = create_gui()
 	
 	gui:attach_button{
-		x = 20, y = 60,
+		x = 20, y = 70,
 		label = "Install",
 		bgcol = 0x070d,
 		click = install_pepper
 	}	
 	
 	gui:attach_button{
-		x = 66, y = 60,
+		x = 66, y = 70,
 		label = "Uninstall",
 		bgcol = 0x070d,
 		click = uninstall_pepper
 	}	
 	
 	gui:attach_button{
-		x = 155, y = 60,
+		x = 155, y = 70,
 		label = "Run",
 		bgcol = 0x070d,
 		click = run_pepper_once
@@ -51,6 +57,7 @@ function install_pepper()
 	mkdir"/appdata/system/tooltray"
 	create_process(pwd() .. "/pepper.lua", {argv = split("export main -f " .. pwd() .. "/ -t /appdata/system/tooltray/pepper.p64", " ", false)})
 	modify_startup(true)
+	notify"Pepper Installed at /appdata/sysstem/tooltray/"
 end
 
 function uninstall_pepper()
@@ -62,6 +69,7 @@ function uninstall_pepper()
 		rm("/system/util/pepper.lua")
 	end
 	modify_startup()
+	notify"Pepper Uninstalled"
 end
 
 function run_pepper_once()

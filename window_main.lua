@@ -1,4 +1,4 @@
---[[pod_format="raw",created="2024-05-25 22:10:24",modified="2024-05-29 18:30:57",revision=1451]]
+--[[pod_format="raw",created="2024-05-25 22:10:24",modified="2024-05-29 19:20:50",revision=1616]]
 function _init()
 	wind = window{
 		width = 200,
@@ -137,11 +137,9 @@ end
 
 function pepper_run()
 	create_process(pwd() .. "/pepper.lua", {argv = {"run", current_mode}})
-	--include"pepper.lua"
 end
 
 function pepper_export()
-	-- maybe present an export location
 	create_process(pwd() .. "/pepper.lua", {argv = {"export", current_mode}})
 end
 

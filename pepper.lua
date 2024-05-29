@@ -1,4 +1,4 @@
---[[pod_format="raw",created="2024-05-19 15:24:54",modified="2024-05-29 18:30:57",revision=3754]]
+--[[pod_format="raw",created="2024-05-19 15:24:54",modified="2024-05-29 19:20:50",revision=3913]]
 -- contains the code for running the command (look at other commands for examples)
 
 -- probably put the files into /ram/pepper/
@@ -331,7 +331,7 @@ local function pepper_file(file, init_pepper, base_defs)
 		i = b+1
 		
 		if c == "def" then
-			local _,b,name = file:find("(%w)",i)
+			local _,b,name = file:find("(%w+)",i)
 			i = b+2
 			
 			local val, e = eval_statement(file, i, defs)
