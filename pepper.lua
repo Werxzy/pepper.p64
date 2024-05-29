@@ -1,4 +1,4 @@
---[[pod_format="raw",created="2024-05-19 15:24:54",modified="2024-05-29 01:27:58",revision=3148]]
+--[[pod_format="raw",created="2024-05-19 15:24:54",modified="2024-05-29 07:31:08",revision=3477]]
 -- contains the code for running the command (look at other commands for examples)
 
 -- probably put the files into /ram/pepper/
@@ -399,13 +399,17 @@ elseif argv[1] == "export" then
 			j = argv[i + 1]
 		end
 	end
-
+	
+	
+			
 	if j then
 		cp("/ram/pepper/", j)
 	else
-		notify"no export location provided"
+		--"no export location provided"
 		-- probably have a default location
 		-- also warn against overwritting the original project
+		send_message(env().parent_pid, -- env().parent_pid, 
+			{event="export_done"})
 	end
 
 end

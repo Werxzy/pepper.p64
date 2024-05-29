@@ -1,14 +1,15 @@
---[[pod_format="raw",created="2024-05-25 22:10:24",modified="2024-05-29 01:27:58",revision=745]]
+--[[pod_format="raw",created="2024-05-25 22:10:24",modified="2024-05-29 07:31:08",revision=1191]]
 function _init()
 	wind = window{
 		width = 200,
 		height = 108,
 		title = "Pepper"
 	}
-	
+
 	run_modes = {}
 	
 	init_gui()
+	
 end
 
 function _draw()
@@ -40,6 +41,23 @@ end
 
 function init_gui()
 	gui = create_gui()
+	
+	local pep = gui:attach_button{
+		x = 1, y = 1, width = 15, height = 15
+	}
+	function pep:draw() end
+	function pep:release(event)
+		mouselock(false)
+	end
+	function pep:drag(event)
+		-- has a lot of jittering
+		--	send_message(3, {event="move_window", dx = event.dx, dy = event.dy})
+	
+		local x, y = mouselock(true, 1, 1)
+		send_message(3, {event="move_window", dx = x, dy = y})
+	end
+
+
 	last_b = {
 		x = 14,
 		y = 1,
@@ -124,4 +142,18 @@ end
 
 function pepper_export()
 	-- maybe present an export location
+	create_process(pwd() .. "/pepper.lua", {argv = {"export", current_mode}})
 end
+
+on_event("export_done", function(msg)
+	create_process("/system/apps/filenav.p64", 
+				{path=path, intention="save_file_as", use_ext = "p64", window_attribs={workspace = "current", autoclose=true}})
+end)
+
+on_event("save_file_as", function(msg)
+	local fn = msg.filename
+	if(not fn:ext()) fn ..= ".p64"
+	
+	cp("/ram/pepper/", fn)			
+	notify("saved as ".. fn) -- show message even if cart file
+end)
