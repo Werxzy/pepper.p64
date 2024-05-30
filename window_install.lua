@@ -1,4 +1,4 @@
---[[pod_format="raw",created="2024-05-25 22:13:23",modified="2024-05-29 23:44:07",revision=1720]]
+--[[pod_format="raw",created="2024-05-25 22:13:23",modified="2024-05-30 22:37:24",revision=1762]]
 function _init()
 	wind = window{
 		width = 200,
@@ -90,6 +90,7 @@ function modify_startup(process)
 	
 	if process then
 		file ..= [[
+		
 --PEPPER_PROCESS-- 
 -- do not add anything extra between the comments
 -- that you don't want removed along with pepper.p64

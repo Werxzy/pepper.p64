@@ -1,4 +1,4 @@
---[[pod_format="raw",created="2024-05-19 15:24:54",modified="2024-05-29 23:44:07",revision=3930]]
+--[[pod_format="raw",created="2024-05-19 15:24:54",modified="2024-05-30 22:37:24",revision=3977]]
 -- contains the code for running the command (look at other commands for examples)
 
 -- probably put the files into /ram/pepper/
@@ -556,7 +556,16 @@ if is_error(err) then
 	display_error(err, base_path)
 	
 elseif argv[1] == "run" then
-	create_process("/ram/pepper/main.lua")
+	-- copied from wm.lua (may need to update if there are changes)
+	local id = create_process("/system/apps/terminal.lua",{
+		corun_program = "/ram/pepper/main.lua",       -- program to run // terminal.lua observes this and is also used to set pwd
+		window_attribs = {
+			pwc_output = true,                      -- replace existing pwc_output process			
+			show_in_workspace = true,               -- immediately show running process
+		}
+	})
+	
+	send_message(3, {event="set_haltable_proc_id", haltable_proc_id = id})
 	
 elseif argv[1] == "export" then
 	local j = nil
