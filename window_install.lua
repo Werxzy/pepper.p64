@@ -1,4 +1,4 @@
---[[pod_format="raw",created="2024-05-25 22:13:23",modified="2024-05-30 22:37:24",revision=1762]]
+--[[pod_format="raw",created="2024-05-25 22:13:23",modified="2024-05-30 23:24:58",revision=1796]]
 function _init()
 	wind = window{
 		width = 200,
@@ -54,6 +54,7 @@ function init_gui()
 end
 
 function install_pepper()
+	mode = "install"
 	mkdir"/appdata/system/tooltray"
 	create_process(pwd() .. "/pepper.lua", {argv = split("export main -f " .. pwd() .. "/ -t /appdata/system/tooltray/pepper.p64", " ", false)})
 	modify_startup(true)
@@ -73,10 +74,8 @@ function uninstall_pepper()
 end
 
 function run_pepper_once()
-	include "window_main.lua"
-	_init()
-	-- TODO: instead pepper the file and put it into ram/compost
-	-- load the file from ram with create process
+	mode = "once"
+	create_process(pwd() .. "/pepper.lua", {argv = split("export main -f " .. pwd() .. "/ -t /ram/compost/pepper.p64", " ", false)})
 end
 
 function modify_startup(process)
@@ -121,5 +120,9 @@ function remove_pepper_process(file)
 end
 
 on_event("export_done", function(msg)
-	cp("/appdata/system/tooltray/pepper.p64/pepper.lua", "/system/util/pepper.lua")
+	if mode == "install" then
+		cp("/appdata/system/tooltray/pepper.p64/pepper.lua", "/system/util/pepper.lua")
+	elseif mode == "once" then
+		create_process("/ram/compost/pepper.p64")
+	end
 end)
