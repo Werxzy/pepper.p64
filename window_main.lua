@@ -1,10 +1,22 @@
---[[pod_format="raw",created="2024-05-25 22:10:24",modified="2024-05-30 23:24:58",revision=1709]]
+--[[pod_format="raw",created="2024-05-25 22:10:24",modified="2024-06-29 21:59:16",revision=1804]]
 function _init()
 	wind = window{
 		width = 200,
 		height = 108,
 		title = "Pepper"
 	}
+
+--[[
+-- currently limited to the active window
+	menuitem{
+		id = "test",
+		label = "Test",
+		shortcut = "CTRL-P",
+		action = function()
+			notify"test"
+		end
+	}
+--]]
 
 	run_modes = {}
 	
