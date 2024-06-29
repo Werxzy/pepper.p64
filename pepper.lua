@@ -1,7 +1,9 @@
---[[pod_format="raw",created="2024-05-19 15:24:54",modified="2024-05-30 23:24:58",revision=4010]]
+--[[pod_format="raw",created="2024-05-19 15:24:54",modified="2024-06-29 22:06:20",revision=4131]]
 -- contains the code for running the command (look at other commands for examples)
 
 -- probably put the files into /ram/pepper/
+
+local version = "v1.1"
 
 local argv = env().argv or {}
 
@@ -146,8 +148,12 @@ pepper help [topic]
 	return
 end
 
-if argv[1] ~= "run" and argv[1] ~= "export" then
+
+if argv[1] ~= "run" and argv[1] ~= "export" then	
 	print([[
+ProjEct PreProcEssor ]] ..version .. [[
+
+
 pepper run [.pepper] [-f | -k | -s]
 	builds the current project and runs
 	[.pepper]		starting pepper parameter file
@@ -504,12 +510,12 @@ local keep_pepper = count(argv, "-k") > 0
 local function pepper_dir(dir, ignore, defs)
 	local files = ls(dir)
 	for f in all(files) do
-		local _f, f = f, dir .. f
-		
+		local _f, f = f, dir .. "/" .. f
+
 		-- skip files or folders from a table
 		if not ignore or (count(ignore, f) == 0 and count(ignore, _f) == 0) then
 			local ty = fstat(f)
-						
+
 			if ty == "file" then
 				if f:ext() == "lua" then
 					-- pepper lua file
@@ -550,7 +556,7 @@ if file then
 	file, defs = f, d
 end
 
-local err = pepper_dir("/ram/pepper/", defs._pepper_ignore, defs)
+local err = pepper_dir("/ram/pepper", defs._pepper_ignore, defs)
 
 if is_error(err) then
 	display_error(err, base_path)

@@ -1,9 +1,9 @@
---[[pod_format="raw",created="2024-05-25 22:13:23",modified="2024-05-30 23:24:58",revision=1796]]
+--[[pod_format="raw",created="2024-05-25 22:13:23",modified="2024-06-29 22:06:20",revision=1902]]
 function _init()
 	wind = window{
 		width = 200,
 		height = 100,
-		title = "Pepper Installer"
+		title = "Pepper v1.1 Installer"
 	}
 		
 	init_gui()
