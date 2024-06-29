@@ -1,4 +1,4 @@
---[[pod_format="raw",created="2024-05-19 15:24:54",modified="2024-06-29 22:06:20",revision=4131]]
+--[[pod_format="raw",created="2024-05-19 15:24:54",modified="2024-06-29 23:04:28",revision=4148]]
 -- contains the code for running the command (look at other commands for examples)
 
 -- probably put the files into /ram/pepper/
@@ -535,7 +535,7 @@ local function pepper_dir(dir, ignore, defs)
 				
 			elseif ty == "folder" then
 				-- check files and folders in this folder.
-				pepper_dir(f)
+				pepper_dir(f, ignore, defs)
 			end
 		end
 	end
