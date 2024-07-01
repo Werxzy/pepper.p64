@@ -1,4 +1,4 @@
---[[pod_format="raw",created="2024-05-19 15:24:54",modified="2024-06-29 23:04:28",revision=4148]]
+--[[pod_format="raw",created="2024-05-19 15:24:54",modified="2024-07-01 20:12:37",revision=4247]]
 -- contains the code for running the command (look at other commands for examples)
 
 -- probably put the files into /ram/pepper/
@@ -197,16 +197,17 @@ end
 -- displays the error using the infobar
 local function display_error(e, base_path)
 	assert(e.file)
+
 	local i, line_number, line_text = 1, 1
 	while true do
 		_, i, line_text = e.file:find("([^\n]*)\n", i)
-		if i >= e.i then
+		if not i or i >= e.i then
 			break
 		end
 		i += 1
 		line_number += 1
 	end
-
+	
 	send_message(3, {event="report_error", content = "Pepper build error : " .. e.message})
 	send_message(3, {event="report_error", content = base_path .. sub(e.path, 13) .. " : line " .. line_number})
 	send_message(3, {event="report_error", content = line_text})
@@ -382,7 +383,7 @@ local function pepper_file(file, init_pepper, base_defs)
 			
 			add(section_removal, {a, e})
 			i = e+1
-		
+			
 		elseif c == "insert" and not init_pepper then
 			local val, e = eval_statement(file, i, defs)
 			if(is_error(val)) return val
@@ -414,6 +415,10 @@ local function pepper_file(file, init_pepper, base_defs)
 				end
 				
 				if c == "remove" then
+					if not param[1] then
+						return new_error(a, file, "missing parameters")
+					end
+					
 					for s in all(param) do
 						if #s > 1 then
 							rm("/ram/pepper/" .. s)
@@ -421,6 +426,10 @@ local function pepper_file(file, init_pepper, base_defs)
 					end	
 								
 				elseif c == "rename" then
+					if not param[2] then
+						return new_error(a, file, "missing parameters")
+					end
+					
 					local from = "/ram/pepper/" .. param[1]
 					local to = "/ram/pepper/" .. param[2]
 					
@@ -428,6 +437,10 @@ local function pepper_file(file, init_pepper, base_defs)
 					rm(from)
 								
 				elseif c == "include" then
+					if not param[1] then
+						return new_error(a, file, "missing parameters")
+					end
+					
 					local path = "/ram/pepper/" .. param[1]
 					if count(include_files, path) > 3 then
 						return new_error(a, file, "infinite loop detected")
@@ -446,6 +459,10 @@ local function pepper_file(file, init_pepper, base_defs)
 					del(include_files, path)
 			
 				elseif c == "ignore" then
+					if not param[1] then
+						return new_error(a, file, "missing parameters")
+					end
+					
 					if not defs._pepper_ignore then
 						defs._pepper_ignore = {}
 					end
@@ -535,7 +552,11 @@ local function pepper_dir(dir, ignore, defs)
 				
 			elseif ty == "folder" then
 				-- check files and folders in this folder.
-				pepper_dir(f, ignore, defs)
+				local err = pepper_dir(f, ignore, defs)
+				
+				if is_error(err) then
+					return err
+				end
 			end
 		end
 	end
