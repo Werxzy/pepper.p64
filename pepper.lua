@@ -1,9 +1,9 @@
---[[pod_format="raw",created="2024-05-19 15:24:54",modified="2024-07-01 20:12:37",revision=4247]]
+--[[pod_format="raw",created="2024-05-19 15:24:54",modified="2025-07-07 07:11:16",revision=4339]]
 -- contains the code for running the command (look at other commands for examples)
 
 -- probably put the files into /ram/pepper/
 
-local version = "v1.1"
+local version = "v1.2"
 
 local argv = env().argv or {}
 
@@ -132,8 +132,17 @@ include default.pepper
 	Skips specified one or more files or folders in the build process.
 	Can help with build times if there are a lot of files.
 	Skipped files are still included in the final build.
+	Spaces separate file paths.
 	
 ignore gfx/ sfx/ map/ src/ gui.lua
+
+== execute ==
+
+	Runs a lua script. 
+	Parameters after the first are returned from get_param() 
+	as a table of strings.
+	
+execute file.lua param1 param2 ...
 ]===]}
 
 	print(helps[argv[2]] or [[
@@ -470,7 +479,34 @@ local function pepper_file(file, init_pepper, base_defs)
 					for s in all(param) do
 						add(defs._pepper_ignore, s)
 					end	
-				
+					
+				elseif c == "execute" then
+					if not param[1] then
+						return new_error(a, file, "missing parameters")
+					end
+					
+					local from = "/ram/pepper/" .. param[1]
+					local file = fetch(from)	
+					
+					if not file then
+						return new_error(a, file, "missing file")
+					end
+			
+					-- don't need first one
+					deli(param, 1)	
+					
+					function get_param() return param end
+			
+					local f, err = load(file, from, "t", _ENV)
+					if not f then
+						return new_error(a, file, err)
+					end
+					
+					local ok, err = pcall(f)
+					if not ok then
+						return new_error(a, file, err)
+					end
+					
 				end
 			end
 		end

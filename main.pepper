@@ -1,4 +1,4 @@
---[[pod_format="raw",created="2024-05-21 18:55:28",modified="2024-07-01 20:12:37",revision=1329]]
+--[[pod_format="raw",created="2024-05-21 18:55:28",modified="2025-07-07 06:52:09",revision=1426]]
 
 ignore pepper.lua
 
@@ -8,3 +8,4 @@ remove TODO.lua sfx/ map/
 
 ignore README.lua
 
+execute test_folder/test_script.lua 1 2 3

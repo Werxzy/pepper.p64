@@ -1,8 +1,8 @@
---[[pod_format="raw",created="2024-05-19 15:23:45",modified="2024-05-30 23:24:58",revision=2956]]
+--[[pod_format="raw",created="2024-05-19 15:23:45",modified="2025-07-07 06:58:15",revision=3233]]
 
 --#if false
 
-include "window_install.lua" 
+--include "window_install.lua" 
 
 --[[#elseif label
 
@@ -27,11 +27,11 @@ function _draw()
 	sspr(l, 0, 0, w, h, x, y, w2, h2)
 end
 
---#else
+--#else]]
 
 -- sets up .pepper to open in the code file
 create_process("/system/util/default_app.lua", {argv={"pepper", "/system/apps/code.p64"}})
 
 include "window_main.lua"
 
---#end]]
+--#end

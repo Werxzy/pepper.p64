@@ -1,9 +1,13 @@
---[[pod_format="raw",created="2024-05-25 22:13:23",modified="2024-06-29 22:06:20",revision=1902]]
+--[[pod_format="raw",created="2024-05-25 22:13:23",modified="2025-07-07 07:05:48",revision=2085]]
+
+-- NO LONGER NEEDED DUE TO CLICK AND DRAG INSTALL
+
+
 function _init()
 	wind = window{
 		width = 200,
 		height = 100,
-		title = "Pepper v1.1 Installer"
+		title = "Pepper v1.2 Installer"
 	}
 		
 	init_gui()

@@ -1,10 +1,13 @@
---[[pod_format="raw",created="2024-05-25 22:10:24",modified="2024-06-29 21:59:16",revision=1804]]
+--[[pod_format="raw",created="2024-05-25 22:10:24",modified="2025-07-07 07:22:03",revision=2005]]
 function _init()
 	wind = window{
 		width = 200,
 		height = 108,
 		title = "Pepper"
 	}
+	
+-- copies over pepper file for console use
+	cp("pepper.lua", "/system/util/pepper.lua")
 
 --[[
 -- currently limited to the active window
@@ -29,7 +32,7 @@ function _draw()
 	spr(1,1,1)
 	
 	if #run_modes > 0 then
-		rectfill(1, 15, window_width - 2, 15, 0xd)
+		rectfill(1, 16, window_width - 2, 16, 0xd)
 	end
 
 	gui:draw_all()
@@ -55,20 +58,10 @@ function init_gui()
 	gui = create_gui()
 	
 	local pep = gui:attach_button{
-		x = 1, y = 1, width = 15, height = 15
+		x = 1, y = 1, width = 15, height = 15, cursor="grab"
 	}
 	function pep:draw() end
-	function pep:release(event)
-		mouselock(false)
-	end
-	function pep:drag(event)
-		-- has a lot of jittering
-		--	send_message(3, {event="move_window", dx = event.dx, dy = event.dy})
-	
-		local x, y = mouselock(true, 1, 1)
-		send_message(3, {event="move_window", dx = x, dy = y})
-	end
-
+	function pep:click() send_message(3, {event="grab"}) end
 
 	last_b = {
 		x = 14,
@@ -80,6 +73,8 @@ function init_gui()
 	local b = next_button("  ",
 		function()
 			run_modes = {"None"}
+			-- just in case
+			cp("pepper.lua", "/system/util/pepper.lua")
 
 			for f in all(ls("/ram/cart/")) do
 				
@@ -98,11 +93,11 @@ function init_gui()
 	end	
 	
 	local top_width = last_b.x + last_b.width
-	local top_height = last_b.y + last_b.height
+	local top_height = last_b.y + last_b.height + 1
 
 	last_b = {
 		x = 0,
-		y = last_b.y + last_b.height+2,
+		y = last_b.y + last_b.height+3,
 		width = 0,
 	}
 	
@@ -138,7 +133,7 @@ function init_gui()
 	window_width = max(max(top_width, last_b.x + last_b.width), 75) + 1
 	window{
 		width = window_width,
-		height = #mode_buttons > 0 and (last_b.y + last_b.height) or top_height,
+		height = #mode_buttons > 0 and (last_b.y + last_b.height + 1) or top_height,
 		title = "Pepper"
 	}
 	
